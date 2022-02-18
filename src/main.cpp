@@ -37,18 +37,7 @@ delay(2000);
 
 printSerial();
 
-      while (SimSlot2.available())    
-      {
-        SimSlot2.read();
-      }
-      while (SimSlot2.available())    
-      {
-        SimSlot2.read();
-      }
-      while (SimSlot2.available())    
-      {
-        SimSlot2.read();
-      }
+      
 }
 
 

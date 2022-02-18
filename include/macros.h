@@ -5,7 +5,7 @@
 //debug
 #define DEBUG 0
 #define COMMENT 1
-#define CODE_NOT_IN_USE 1
+#define CODE_NOT_IN_USE 0
 
 
 // Default Definitions and LED's
@@ -56,18 +56,21 @@ int ledState = LOW;
 unsigned long previousMillis = 0;
 
 
-char buffer[1000];
-
-
-#define SimSlot1 Serial
-#define DebugPrint Serial.println
-#define SimSlot2 Serial1
-#define SimSlot3 Serial2
+#define DebugPrint Serial
+#define sim1 1
+#define sim2 2
+#define sim3 3
 
 
 #include "BluetoothSerial.h"
 #include <errno.h>
-#include "AT_commander.h"
+#include "cmd.h"
+
+
+  ATcommander SimSlot1;
+  ATcommander SimSlot2;
+  ATcommander SimSlot3;
+
 #include "simcomm.h"
 
 #endif
