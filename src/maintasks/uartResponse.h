@@ -72,16 +72,21 @@ void replySocket(String data){
   USE_SERIAL.println(data);
   #endif
 
-  if(data.indexOf(READSMS) > 0){
+  if(data.indexOf(READSMS) >= 0){
     data = data.substring(data.indexOf(READSMS)); // clears junks before READSMS 
   }
   else if(data.indexOf(DAILUSSD) > 0){
     data = data.substring(data.indexOf(DAILUSSD));
   }
+  
     String datasub = data.substring(0, CMD_LEN);
     //const char *response = data.substring(CMD_LEN + 2, data.length()-1).c_str();
 
 
+    USE_SERIAL.print("data ");
+    USE_SERIAL.println(data);
+    USE_SERIAL.print("datasub : ");
+    USE_SERIAL.println(datasub);
   #if (DEBUG == 1)
     USE_SERIAL.println("replySocket command process");
   #endif
@@ -127,6 +132,7 @@ void replySocket(String data){
       // int encodedLength = Base64.encodedLength(inputStringLength);
       // char encodedString[encodedLength + 1];
       // Base64.encode(encodedString, inputString, inputStringLength);
+    USE_SERIAL.println("data got to last destination");
       datasub = base64::encode(data);
       if (ws_domain_resolved) {
         String ws_data = datasub + "readsms: ";
@@ -212,12 +218,12 @@ void replySocket(String data){
 
 
 
-void uart0getResponse(){
+void SimSlot1getResponse(){
     // Implement your custom logic here
       String datasub="";
-  #if (DEBUG == 1)
+  // #if (DEBUG == 1)
   USE_SERIAL.println("processing command"); // debug
-  #endif
+  // #endif
 if ( SimSlot1.available() >= 1 )
     {
 while(SimSlot1.available()){
@@ -226,10 +232,15 @@ while(SimSlot1.available()){
     delayMicroseconds(1050);        
 }
 
+  // #if (DEBUG == 1)
+  USE_SERIAL.println(datasub); // debug
    Serial.println(datasub.indexOf('+CMTI'));
+  USE_SERIAL.println(",,,,,,,,,,,,,,,,"); // debug
+  // #endif
+
     }
 
-    // datasub = "+CMTI: "SM",32 ";
+    datasub = "\"+CMTI: \"SM\",32 ";
   // Serial.print(datasub.indexOf("+CMTI",1));
   //todo : check onsolicited messaeges and process them
   //step 1 : check if datasubs an unsolicited message
@@ -245,10 +256,11 @@ while(SimSlot1.available()){
       memset (rd,'\0',sizeof rd);
       sprintf(rd,"%s%i","AT+CMGR=",index); 
       SimSlot1.println(rd);
+
       //step 3: read teh sms on that index
-      delay(1000);
-      datasub = "aaaa ";
-      while(SimSlot1.available()<1); //todo : remove this later
+      delay(1500);
+      datasub = "aaaa abc ";
+      // while(SimSlot1.available()<1); //todo : remove this later
       if ( SimSlot1.available() >= 1){
         while(SimSlot1.available()){
           char c = SimSlot1.read();
@@ -256,6 +268,11 @@ while(SimSlot1.available()){
           delayMicroseconds(1050); 
           }
         }
+        
+  // #if (DEBUG == 1)
+  USE_SERIAL.println("datasub output : "); // debug
+  USE_SERIAL.println(datasub); // debug
+  // #endif
       //step 4: delete the sms
       memset (rd,'\0',sizeof rd);
       sprintf(rd,"%s%i","AT+CMGD=",index); // change t to index
@@ -264,52 +281,39 @@ while(SimSlot1.available()){
       
 
       //step x: push the message to the cloud
-      // replySocket(datasub);
       USE_SERIAL.println(datasub);
+      replySocket(datasub);
     }
   
 }
 
-void uart1getResponse(){
+
+
+
+
+///////////simSlot2
+
+
+void SimSlot2getResponse(){
     // Implement your custom logic here
       String datasub="";
-  #if (DEBUG == 1)
-  USE_SERIAL.println("processing command"); // debug
-  #endif
-if ( Serial1.available() >= 1 )
+  // #if (DEBUG == 1)
+  // USE_SERIAL.println("processing command"); // debug
+  // #endif
+if ( SimSlot2.available() >= 1 )
     {
-while(Serial1.available()){
-    char c = Serial1.read();
-    datasub+=c;
-    delayMicroseconds(1050); 
+while(SimSlot2.available()){
+    char c = SimSlot2.read();
+    datasub.concat(c);
+    delayMicroseconds(1050);        
 }
-    }
-  #if (DEBUG == 1)
+  // #if (DEBUG == 1)
   USE_SERIAL.println(datasub); // debug
-  #endif
+   Serial.println(datasub.indexOf('+CMTI'));
+  // #endif
 
-  //todo : check onsolicited messaeges and process them
-
-}
-
-
-void uart2getResponse(){
-    // Implement your custom logic here
-      String datasub="";
-  #if (DEBUG == 1)
-  USE_SERIAL.println("processing command"); // debug
-  #endif
-if ( Serial2.available() >= 1 )
-    {
-while(Serial2.available()){
-    char c = Serial2.read();
-    datasub+=c;
-    delayMicroseconds(1050); 
-}
-///////////HERE
-
-   SimSlot2.println(datasub.indexOf('+CMTI'));
     }
+
 
     // datasub = "+CMTI: "SM",32 ";
   // Serial.print(datasub.indexOf("+CMTI",1));
@@ -326,7 +330,8 @@ while(Serial2.available()){
       char rd[10];
       memset (rd,'\0',sizeof rd);
       sprintf(rd,"%s%i","AT+CMGR=",index); 
-      SimSlot1.println(rd);
+      SimSlot2.println(rd);
+
       //step 3: read teh sms on that index
       delay(1000);
       datasub = "aaaa ";
@@ -338,45 +343,101 @@ while(Serial2.available()){
           delayMicroseconds(1050); 
           }
         }
+        
+  #if (DEBUG == 1)
+  USE_SERIAL.println(datasub); // debug
+  #endif
       //step 4: delete the sms
       memset (rd,'\0',sizeof rd);
       sprintf(rd,"%s%i","AT+CMGD=",index); // change t to index
-      Serial.println(rd);
+      SimSlot2.println(rd);
       //step 5: save the message in MMC
       
 
       //step x: push the message to the cloud
-      // replySocket(datasub);
       USE_SERIAL.println(datasub);
+      replySocket(datasub);
     }
-    // to here
   
 }
 
-void uart1getResponse(){
+
+///////////simSlot3
+
+
+void SimSlot3getResponse(){
     // Implement your custom logic here
       String datasub="";
-  #if (DEBUG == 1)
-  USE_SERIAL.println("processing command"); // debug
-  #endif
-if ( Serial1.available() >= 1 )
+  // #if (DEBUG == 1)
+  // USE_SERIAL.println("processing command"); // debug
+  // #endif
+if ( SimSlot3.available() >= 1 )
     {
-while(Serial1.available()){
-    char c = Serial1.read();
-    datasub+=c;
-    delayMicroseconds(1050); 
+while(SimSlot3.available()){
+    char c = SimSlot3.read();
+    datasub.concat(c);
+    delayMicroseconds(1050);        
 }
-    }
-  #if (DEBUG == 1)
+
+  // #if (DEBUG == 1)
+  USE_SERIAL.print("datasub 1 : "); // debug
   USE_SERIAL.println(datasub); // debug
-  #endif
+   Serial.println(datasub.indexOf('+CMTI'));
+  // #endif
+    }
 
+
+    // datasub = "+CMTI: "SM",32 ";
+  // Serial.print(datasub.indexOf("+CMTI",1));
   //todo : check onsolicited messaeges and process them
+  //step 1 : check if datasubs an unsolicited message
+  if(datasub.indexOf("+CMTI") >= 0){
+    
+    datasub = datasub.substring(datasub.indexOf("+CMTI"));
+  // #if (DEBUG == 1)
+  USE_SERIAL.print("datasub2 : "); // debug
+  USE_SERIAL.println(datasub); // debug
+  // #endif
+        uint8_t index = datasub.substring(datasub.indexOf('\",')+1 , datasub.indexOf('\",')+3).toInt();
+      //step 2: if yes, read the index 
+      char rd[10];
+      memset (rd,'\0',sizeof rd);
+      sprintf(rd,"%s%i","AT+CMGR=",index); 
+      SimSlot3.println(rd);
 
+      //step 3: read teh sms on that index
+      delay(1500);
+      datasub = "aaaa ";
+      // while(SimSlot3.available()<1); //todo : remove this later
+      if ( SimSlot3.available() >= 1){
+        while(SimSlot3.available()){
+          char c = SimSlot3.read();
+          datasub+=c;
+          delayMicroseconds(1050); 
+          }
+        }
+        
+  // #if (DEBUG == 1)
+  USE_SERIAL.print("datasub3 : "); // debug
+  USE_SERIAL.println(datasub); // debug
+  // #endif
+      //step 4: delete the sms
+      memset (rd,'\0',sizeof rd);
+      sprintf(rd,"%s%i","AT+CMGD=",index); // change t to index
+      SimSlot3.println(rd);
+      //step 5: save the message in MMC
+      
 
-
+      //step x: push the message to the cloud
+      // USE_SERIAL.println(datasub);
+    }
+      // datasub = "aaaa 123 testing";
+  USE_SERIAL.print("datasub4 : "); // debug
+      USE_SERIAL.println(datasub);
+      replySocket(datasub);
+  USE_SERIAL.print("--------------------"); // debug
+  
 }
-
 
 
 void processProminiData(){	
@@ -397,28 +458,28 @@ void processProminiData(){
       // Serial.println(" pingVerified is = 1");
     }
   }
-  
+  /*
   if(Serial2.available() >= 1){
   #if (DEBUG == 1)
     USE_SERIAL.print(F("REACH HERE: Serial 2"));
   #endif
-      // Serial.println(" pingVerified is = 1");
+      Serial.println(" pingVerified is = 2");
     uart2getResponse();
   }
   if(Serial1.available() >= 1){
   #if (DEBUG == 1)
     USE_SERIAL.print(F("REACH HERE: Serial 1"));
   #endif
-      // Serial.println(" pingVerified is = 1");
+      Serial.println(" pingVerified is = 1");
     uart1getResponse();
   }
   if(Serial.available() >= 1){
   #if (DEBUG == 1)
     USE_SERIAL.print(F("REACH HERE: Serial 0"));
   #endif
-      // Serial.println(" pingVerified is = 1");
+      Serial.println(" pingVerified is = 0");
     uart0getResponse();
-  }
+  }*/
   /*if (redundantData !="") {
     replySocket("ignor");
   }*/

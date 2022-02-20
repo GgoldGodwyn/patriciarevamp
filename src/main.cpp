@@ -62,34 +62,40 @@ void setup() {
         SimSlot1.println("ATE0");
         SimSlot2.println("ATE0");
         SimSlot3.println("ATE0");
-        delay(50);
+        delay(500);
         SimSlot1.println("AT+CMGF=1");
         SimSlot2.println("AT+CMGF=1");
         SimSlot3.println("AT+CMGF=1");
-        delay(50);
-      }
+        delay(500);
       // SimSlot2.println("ATD+2348161111269;");
       // SimSlot1.println("ATD+2348161111269;");
       // SimSlot3.println("ATD+2348161111269;");
-      while(1){
-        while(Serial.available()){
-          Serial.read();
-        }
-        while(Serial1.available()){
-          Serial1.read();
-        }
-        while(Serial2.available()){
-          Serial2.read();
-        }
-        break;
-      }
-
-while(1){
-  uart0getResponse();
-}
 
       
-/*
+        Serial.print("SimSlot1 : ");
+        while(SimSlot1.available()){
+          Serial.print(SimSlot1.read());
+          delayMicroseconds(2000);
+        }
+        Serial.print("\nSimSlot2 : ");
+        while(SimSlot2.available()){
+          Serial.print(SimSlot2.read());
+          delayMicroseconds(2000);
+        }
+        Serial.print("\nSimSlot3 : ");
+        while(SimSlot3.available()){
+          Serial.print(SimSlot3.read());
+          delayMicroseconds(2000);
+        }
+        Serial.print("\n");
+      }
+
+// while(1){
+//   uart2getResponse();
+// }
+
+      
+
 delay(2000);
 initWiFi();
 
@@ -117,7 +123,7 @@ setupServer(); // start async web server inplementing local storage within esp
    setWebsocketPtr(&websck);
     websocket.beginSSL(SERVER_HOST,SERVER_PORT,SERVER_URL);
 
-    */
+    
 
 }
 
@@ -130,9 +136,29 @@ void loop() {
   // GO! Run the scheduler - it never returns.
   // scheduler.runTasks();
    loopSocket();
-   #if(dummyMessage == 0)
    processProminiData();
-   #endif    
+  
+  if(SimSlot3.available() >= 1){
+  #if (DEBUG == 1)
+    USE_SERIAL.print(F("REACH HERE: Serial 2"));
+  #endif
+      Serial.println(" pingVerified is = 2");
+    SimSlot3getResponse();
+  }
+  if(SimSlot2.available() >= 1){
+  #if (DEBUG == 1)
+    USE_SERIAL.print(F("REACH HERE: Serial 1"));
+  #endif
+      Serial.println(" pingVerified is = 1");
+    SimSlot2getResponse();
+  }
+  if(SimSlot1.available() >= 1){
+  #if (DEBUG == 1)
+    USE_SERIAL.print(F("REACH HERE: Serial 0"));
+  #endif
+      Serial.println(" pingVerified is = 0");
+    SimSlot1getResponse();
+  }
 }
 
 
