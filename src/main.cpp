@@ -1,26 +1,49 @@
-#include "Arduino.h"
+
+/****   Include Libraries    ****/
+#include <Arduino.h>
 #include "macros.h"
 
+#define dummyMessage 0
+#define hasMMC 0 // very important
 
+#if (hasMMC == 1)
+#include "advance/webServerConfig.h"
+#include "advance/Card.h"
+#include "advance/mySql.h"
+#include "advance/server.h"
+#endif
+
+void blinkerLED( void * pvParameters );
+//Declare Objects
+SocketIoClient websocket;
+WebSocketsClient websck;
 
 
 void blinkerLED( void * pvParameters );
+void wsEmit(const char *payload);
 
 TaskHandle_t SocketioHandle;
 
-void setup(){
+#include "maintasks/uartResponse.h"
+
+void setup() {
   
   pinMode(LED_BLINKER, OUTPUT);
   pinMode(34, OUTPUT);
 
-  Serial.begin(9600);
+  Serial.begin(HARD_BAUD);
   
   Serial1.begin(HARD_BAUD, SERIAL_8N1, RXD1, TXD1);
   
   Serial2.begin(HARD_BAUD, SERIAL_8N1, RXD2, TXD2);
-  
-  
 
+  Serial1.println("Serial1");
+  Serial2.println("Serial2");
+
+
+  // to save a messege use createAndWriteFile(String buff); where buff is the message from the promini/sim module
+  
+//replySocket("bbbb history_id : 12 AT+CUSD=1,4OK+CUSD: 0, Your data balance:Bonus: 20MB expires 02/11/2021 23:59:59,");
   xTaskCreatePinnedToCore(  //PIN socketIO to core 1
     blinkerLED,         //Point to the tasks function
     "blinkerTask",       //name indentifier for the task
@@ -31,25 +54,89 @@ void setup(){
     1
     );
 
-// start bluetooth
-//wait for connection
-delay(2000);
+      SimSlot1.flush();
+      SimSlot2.flush();
+      SimSlot3.flush();
+      
+      for(int t = 0; t<3; t++){
+        SimSlot1.println("ATE0");
+        SimSlot2.println("ATE0");
+        SimSlot3.println("ATE0");
+        delay(50);
+        SimSlot1.println("AT+CMGF=1");
+        SimSlot2.println("AT+CMGF=1");
+        SimSlot3.println("AT+CMGF=1");
+        delay(50);
+      }
+      // SimSlot2.println("ATD+2348161111269;");
+      // SimSlot1.println("ATD+2348161111269;");
+      // SimSlot3.println("ATD+2348161111269;");
+      while(1){
+        while(Serial.available()){
+          Serial.read();
+        }
+        while(Serial1.available()){
+          Serial1.read();
+        }
+        while(Serial2.available()){
+          Serial2.read();
+        }
+        break;
+      }
 
-printSerial();
+while(1){
+  uart0getResponse();
+}
 
       
+/*
+delay(2000);
+initWiFi();
+
+#if (hasMMC == 1)
+  initCard();
+setupServer(); // start async web server inplementing local storage within esp
+  setupDateTime();
+// checkForESPupdate();
+#endif
+    
+  //Register Socketio events to handler functions and start it
+   websocket.on("connect", connect);
+   websocket.on("disconnected", disconnected);
+   websocket.on("read_sms", readsms);
+   websocket.on("checkbal", checkbal);
+   websocket.on("message", message);
+   websocket.on("read_sms_pend",read_sms_pend);
+   websocket.on("execute_ussd",execute_ussd);
+   websocket.on("logger",Logger);
+
+
+
+
+   setSocketioPtr(&websocket);
+   setWebsocketPtr(&websck);
+    websocket.beginSSL(SERVER_HOST,SERVER_PORT,SERVER_URL);
+
+    */
+
+}
+
+
+//Program will run mainly here
+void loop() {
+  #if (hasMMC == 1)
+  ServerPinger();
+  #endif
+  // GO! Run the scheduler - it never returns.
+  // scheduler.runTasks();
+   loopSocket();
+   #if(dummyMessage == 0)
+   processProminiData();
+   #endif    
 }
 
 
 
-void loop(){
-  checkDataType(checkAllSerial());
-
-}
-
-
-
-unsigned long pingTime = 0;
 void blinkerLED( void * pvParameters )
 {
  for( ;; )

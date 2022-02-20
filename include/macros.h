@@ -3,13 +3,14 @@
 
 
 //debug
-#define DEBUG 0
-#define COMMENT 1
-#define CODE_NOT_IN_USE 0
+#define DEBUG             0
+#define COMMENT           1
+#define CODE_NOT_IN_USE   0
 
 
 // Default Definitions and LED's
 #define LED_BLINKER GPIO_NUM_2
+unsigned long pingTime = 0;
 #define BLINK_RATE 1000
 #define maxDaysToExpire 30
 
@@ -56,21 +57,73 @@ int ledState = LOW;
 unsigned long previousMillis = 0;
 
 
-#define DebugPrint Serial
+#define USE_SERIAL Serial
 #define sim1 1
 #define sim2 2
 #define sim3 3
 
 
+#define UNSOL_MSG "+CMTI"
+
+
 #include "BluetoothSerial.h"
 #include <errno.h>
-#include "cmd.h"
+// #include "cmd.h"
 
 
-  ATcommander SimSlot1;
-  ATcommander SimSlot2;
-  ATcommander SimSlot3;
+#define SimSlot1  Serial // NEAR THE POWER MODULE
+#define SimSlot2  Serial2
+#define SimSlot3  Serial1
 
-#include "simcomm.h"
+#include "WiFi.h"
+#include "ArduinoJson.h"
+#include "connection.h"
+#include "WebSocketsClient.h"
+#include "SocketIOclient.h"
+#include  "maintasks/sockethelper.h"
 
 #endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+  /*
+  //todo : check onsolicited messaeges and process them
+  //step 1 : check if datasubs an unsolicited message
+  if(data.indexOf(UNSOL_MSG) > 0){
+      data = data.substring(data.indexOf(UNSOL_MSG));
+      //step 2: if yes, read the index 
+      char rd[10];
+      memset (rd,'\0',sizeof rd);
+      sprintf(rd,"%s%c","AT+CMGR=",'t'); // change t to index
+      SimSlot1.println(rd);
+      //step 3: read teh sms on that index
+      delay(1000);
+      datasub = "aaaa ";
+      if ( SimSlot1.available() >= 1){
+        while(SimSlot1.available()){
+          char c = SimSlot1.read();
+          datasub+=c;
+          delayMicroseconds(1050); 
+          }
+        }
+      //step 4: delete the sms
+      memset (rd,'\0',sizeof rd);
+      sprintf(rd,"%s%c","AT+CMGD=",'t'); // change t to index
+      SimSlot1.println(rd);
+      //step 5: save the message in MMC
+      
+
+      //step x: push the message to the cloud
+      // replySocket(datasub);
+      USE_SERIAL.println(datasub);
+    }*/
