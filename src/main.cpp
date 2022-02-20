@@ -138,11 +138,10 @@ void loop() {
    loopSocket();
    processProminiData();
   
-  if(SimSlot3.available() >= 1){
+  if(SimSlot3.available() >= 1){  //slot 3 working
   #if (DEBUG == 1)
     USE_SERIAL.print(F("REACH HERE: Serial 2"));
   #endif
-      Serial.println(" pingVerified is = 2");
     SimSlot3getResponse();
   }
   if(SimSlot2.available() >= 1){
