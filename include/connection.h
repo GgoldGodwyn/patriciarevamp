@@ -1,10 +1,10 @@
 #define WIFI_APT " "
 #define WIFI_SSID " "
 
-#define WIFI_PRIMARY_SSID "A2C_Device"    //"Infinix Smart 3 Plus"
-#define WIFI_PRIMARY_PASS "PatA2C_Device1"    //"4099bde020b9"
-#define WIFI_SECONDARY_SSID " " //"MTNHyNetflex 2.4Ghz"
-#define WIFI_SECONDARY_PASS " " //"43792866"
+#define WIFI_PRIMARY_SSID "A2C_Devicetty"    //"Infinix Smart 3 Plus"
+#define WIFI_PRIMARY_PASS "1122334455"    //"4099bde020b9"
+#define WIFI_SECONDARY_SSID "A2C_Device" //"MTNHyNetflex 2.4Ghz"
+#define WIFI_SECONDARY_PASS "PatA2C_Device1" //"43792866"
 
 #define WIFI_TERTIARY_SSID  "DESKTOP-POOMJG6 0347"
 #define WIFI_TERTIARY_PASS  "9249u]1J"
@@ -13,6 +13,7 @@
 #define WS_PONG_INTERVAL 3000
 #define WS_RECONNECT_INTERVAL 3000
 #define WS_DISCONNECT_TIMEOUT_COUNT 2
+
 
 const char *ws_username = "uwsname";
 const char *ws_userpass = "uWSpass1357";
@@ -95,15 +96,18 @@ UdHkhVNcsAKX1H7GNNLOEADksd86wuoXvg==
 #define SERVER_HOST "a2c.gloverapp.co"
 #define SERVER_PORT 443     //80 //8083 //3000    // 
 #define SERVER_URL "/socket.io/?EIO=3&transaport=websocket&token=live-8015f403-36bd-4416-9df7-649d2847a990"
-*/
+
 
 //franscis demo server
 #define SERVER_HOST "iothings.com.ng"
 #define SERVER_PORT 443     //80 //8083 //3000    // 
 #define SERVER_URL "/socket.io/?EIO=3&transaport=websocket&token=live-53478db4-d44c-47e0-8c29-cc1b05849b2a"
-
-
-
+*/
+//live-febc27fb-11bb-4eed-800d-1e73578679d1
+//our pat server   
+#define SERVER_HOST "atoc.gloverapp.co"
+#define SERVER_PORT 443     //80 //8083 //3000    //
+#define SERVER_URL "/socket.io/?EIO=3&transaport=websocket&token=live-7780a9ff-f6f5-4a9b-8db7-d8b0b53107fb"
 
 //
 #define SSL_CERT "CEE86BCFF6D84D0786A89583A6A8431E0BF8D5D2AA64D8F995A9F81AF98CFB7F"  // for dev
@@ -140,3 +144,41 @@ UdHkhVNcsAKX1H7GNNLOEADksd86wuoXvg==
 )EOF";
 //#define SERVER_URL "/sendData"
 //#define SERVER_URL "/"
+
+
+
+
+const char MqttCa_cert[] PROGMEM = R"EOF(
+-----BEGIN CERTIFICATE-----
+MIIFazCCA1OgAwIBAgIRAIIQz7DSQONZRGPgu2OCiwAwDQYJKoZIhvcNAQELBQAw
+TzELMAkGA1UEBhMCVVMxKTAnBgNVBAoTIEludGVybmV0IFNlY3VyaXR5IFJlc2Vh
+cmNoIEdyb3VwMRUwEwYDVQQDEwxJU1JHIFJvb3QgWDEwHhcNMTUwNjA0MTEwNDM4
+WhcNMzUwNjA0MTEwNDM4WjBPMQswCQYDVQQGEwJVUzEpMCcGA1UEChMgSW50ZXJu
+ZXQgU2VjdXJpdHkgUmVzZWFyY2ggR3JvdXAxFTATBgNVBAMTDElTUkcgUm9vdCBY
+MTCCAiIwDQYJKoZIhvcNAQEBBQADggIPADCCAgoCggIBAK3oJHP0FDfzm54rVygc
+h77ct984kIxuPOZXoHj3dcKi/vVqbvYATyjb3miGbESTtrFj/RQSa78f0uoxmyF+
+0TM8ukj13Xnfs7j/EvEhmkvBioZxaUpmZmyPfjxwv60pIgbz5MDmgK7iS4+3mX6U
+A5/TR5d8mUgjU+g4rk8Kb4Mu0UlXjIB0ttov0DiNewNwIRt18jA8+o+u3dpjq+sW
+T8KOEUt+zwvo/7V3LvSye0rgTBIlDHCNAymg4VMk7BPZ7hm/ELNKjD+Jo2FR3qyH
+B5T0Y3HsLuJvW5iB4YlcNHlsdu87kGJ55tukmi8mxdAQ4Q7e2RCOFvu396j3x+UC
+B5iPNgiV5+I3lg02dZ77DnKxHZu8A/lJBdiB3QW0KtZB6awBdpUKD9jf1b0SHzUv
+KBds0pjBqAlkd25HN7rOrFleaJ1/ctaJxQZBKT5ZPt0m9STJEadao0xAH0ahmbWn
+OlFuhjuefXKnEgV4We0+UXgVCwOPjdAvBbI+e0ocS3MFEvzG6uBQE3xDk3SzynTn
+jh8BCNAw1FtxNrQHusEwMFxIt4I7mKZ9YIqioymCzLq9gwQbooMDQaHWBfEbwrbw
+qHyGO0aoSCqI3Haadr8faqU9GY/rOPNk3sgrDQoo//fb4hVC1CLQJ13hef4Y53CI
+rU7m2Ys6xt0nUW7/vGT1M0NPAgMBAAGjQjBAMA4GA1UdDwEB/wQEAwIBBjAPBgNV
+HRMBAf8EBTADAQH/MB0GA1UdDgQWBBR5tFnme7bl5AFzgAiIyBpY9umbbjANBgkq
+hkiG9w0BAQsFAAOCAgEAVR9YqbyyqFDQDLHYGmkgJykIrGF1XIpu+ILlaS/V9lZL
+ubhzEFnTIZd+50xx+7LSYK05qAvqFyFWhfFQDlnrzuBZ6brJFe+GnY+EgPbk6ZGQ
+3BebYhtF8GaV0nxvwuo77x/Py9auJ/GpsMiu/X1+mvoiBOv/2X/qkSsisRcOj/KK
+NFtY2PwByVS5uCbMiogziUwthDyC3+6WVwW6LLv3xLfHTjuCvjHIInNzktHCgKQ5
+ORAzI4JMPJ+GslWYHb4phowim57iaztXOoJwTdwJx4nLCgdNbOhdjsnvzqvHu7Ur
+TkXWStAmzOVyyghqpZXjFaH3pO3JLF+l+/+sKAIuvtd7u+Nxe5AW0wdeRlN8NwdC
+jNPElpzVmbUq4JUagEiuTDkHzsxHpFKVK7q4+63SM1N95R1NbdWhscdCb+ZAJzVc
+oyi3B43njTOQ5yOf+1CceWxG1bQVs5ZufpsMljq4Ui0/1lvh+wjChP4kqKOJ2qxq
+4RgqsahDYVvTH9w7jXbyLeiNdd8XM2w9U/t7y0Ff/9yi0GE44Za4rF2LN9d11TPA
+mRGunUHBcnWEvgJBQl9nJEiU0Zsnvgc/ubhPgXRR4Xq37Z0j4r7g1SgEEzwxA57d
+emyPxgcYxn/eR44/KJ4EBs+lVDR3veyJm+kXQ99b21/+jh5Xos1AnX5iItreGCc=
+-----END CERTIFICATE-----
+)EOF";
+

@@ -1,17 +1,16 @@
-
+#ifdef ARDUINO_ESP32_DEV
+#include <helpers.h>
+// #include <connection.h>
+#include "MQTTuartResponse.h"
 #include <Arduino.h>
-#include "macros.h"
-
-
+//#include <Hash.h>
 
 //Member variable declarations
-bool socketConnected;
 bool connectioWasAlive = true;
-bool expectMessage;
-
-SocketIoClient *ptrSocketio;
+// bool expectMessage;
+PubSubClient *ptr_mqtt;
 WebSocketsClient *ptrWebSocket;
-
+WiFiMulti espWifiMulti;
 
 //group of error codes as it exists on the server end
 enum Code {
@@ -26,56 +25,57 @@ enum Code {
 *     Function Definations                      *
 ************************************************/
 
-
 // Initialize WiFi
 void initWiFi() {
-    WiFi.mode(WIFI_STA); 
-    // WiFi.mode(WIFI_MODE_APSTA);
-// const char *soft_ap_ssid = "MyESP32AP";
-// const char *soft_ap_password = "testpassword";
-//     WiFi.softAP(soft_ap_ssid, soft_ap_password);
+  WiFi.mode(WIFI_STA); 
 
-    WiFi.begin(WIFI_PRIMARY_SSID, WIFI_PRIMARY_PASS);
-    #if DEBUG == 1
-    Serial.print("Connecting to WiFi ..");
-    #endif
-    while (WiFi.status() != WL_CONNECTED) {
-        Serial.print('.');
-        delay(1000);
-    }
-    Serial.println(WiFi.localIP());
+  WiFi.begin(WIFI_PRIMARY_SSID, WIFI_PRIMARY_PASS);
+  WiFi.reconnect();
+  #if DEBUG == 1
+  Serial.print("Connecting to WiFi ..");
+  #endif
+  while (WiFi.status() != WL_CONNECTED) {
+      Serial.print('.');
+      delay(1000);
+  }
+  wifi_client.setCACert(MqttCa_cert);
+  Serial.println(WiFi.localIP());
 }
 
 
-
-/************************************************
-*     Function Definations                      *
-************************************************/
-//Initialize Wifi and connect to an access point
-/*void initWiFi() {
-  //Setup Wifi
-  espWifiMulti.addAP(WIFI_PRIMARY_SSID , WIFI_PRIMARY_PASS);
-  espWifiMulti.addAP(WIFI_SECONDARY_SSID , WIFI_SECONDARY_PASS);
-  espWifiMulti.addAP( WIFI_TERTIARY_SSID , WIFI_TERTIARY_PASS);
-  //WifiMulti.addAP(WIFI_TERTIARY_APT, WIFI_TERTIARY_SSID);
-  
-  while(connectWifi()==false){
-    interval = noNetwork;
-  }
+//desolve every blocking previoius connection and reconnect
+boolean connectWifi(){
   #if (DEBUG == 1)
-  USE_SERIAL.println("connnectd to Wifi");
-  USE_SERIAL.print("Connected to ");
-  USE_SERIAL.println(WiFi.SSID());             // Tell us what network we're connected to
-  USE_SERIAL.print("IP address:\t");
-  USE_SERIAL.print(WiFi.localIP());
+  USE_SERIAL.print("wifi state:  ");
+  USE_SERIAL.println(WiFi.getMode());
   #endif
-}*/
+  WiFi.disconnect(true);
+  delay(1000);
+  #if (DEBUG == 1)
+  USE_SERIAL.print("wifi state:  ");
+  USE_SERIAL.println(WiFi.getMode());
+  #endif
+  int i=0;
+  //now connect to hotspot
+       
+  while (espWifiMulti.run() != WL_CONNECTED)
+  {
+      delay(500);
+        #if (DEBUG == 1)
+        USE_SERIAL.print(i);
+        #endif
+        i++;
+        if(i>10){
+        return false;
+          }
+  }
+  return true;
+}
 
 //Monitor Wifi connection status
 unsigned long check_interval = 3000;
 unsigned long check_previousMillis = 3000;
 void monitorWiFi() {
-  
   unsigned long my_currentMillis = millis();
   // if WiFi is down, try reconnecting every CHECK_WIFI_TIME seconds
   if ((WiFi.status() != WL_CONNECTED) && (my_currentMillis - check_previousMillis >=check_interval)) {
@@ -105,53 +105,11 @@ void monitorWiFi() {
   #endif
   
   }
-
-  // if (espWifiMulti.run() != WL_CONNECTED)
-  // {
-  //     interval = noNetwork;
-  //   if (connectioWasAlive == true)
-  //   {
-  //     connectioWasAlive = false;
-  // #if (DEBUG == 1)
-  //     USE_SERIAL.print("Looking for WiFi ");
-  // #endif
-  //   }
-  // #if (DEBUG == 1)
-  //   USE_SERIAL.print(".");
-  // #endif
-  //   delay(500);
-  // }
-  // else if (connectioWasAlive == false)
-  // {
-  //   connectioWasAlive = true;
-  // #if (DEBUG == 1)
-  //   USE_SERIAL.printf(" connected to %s\n", WiFi.SSID().c_str());
-  // #endif
-  
-  // }
-}
-
-//websocket.io connected event handler
-void connect(const char *payload, size_t length) {
-  #if (DEBUG == 1)
-  USE_SERIAL.println("opened connection:");
-  USE_SERIAL.println(payload);
-  #endif
-  socketConnected = true;
-}
-
-//websocket.io disconnected event handler
-void disconnected(const char *payload, size_t length) {
-  #if (DEBUG == 1)
-  USE_SERIAL.printf("connection closed:");
-  #endif
-  socketConnected = false;
-  interval = 500; 
 }
 
 //set the socketio varaible pointer for this file
-void setSocketioPtr(SocketIoClient *_ptrSocketio) {
-  ptrSocketio = _ptrSocketio;
+void setMqttClientPtr(PubSubClient *_mqtt) {
+  ptr_mqtt = _mqtt;
 }
 
 //set the local websocket variable pointer for this file
@@ -161,15 +119,13 @@ void setWebsocketPtr(WebSocketsClient *_ptrWebSocket) {
 
 //Allows AppManager to loop the socket manually
 void loopSocket()
- {
-//   for (;;) {                  //loop until scheduler terminates its execution
-      ptrSocketio->loop();            //loop the socketio connection to maintain heartbeat
-      if (ws_domain_resolved) {
-        ptrWebSocket->loop();           //loop the local websocket connection to maintain heartbeat
-      }
-      monitorWiFi();                  //ensure wifi is always reconnected if disconnected
-      vTaskDelay(3);
-  // }
+{
+  ptr_mqtt->loop();            //loop the socketio connection to maintain heartbeat
+  if (ws_domain_resolved) {
+    ptrWebSocket->loop();           //loop the local websocket connection to maintain heartbeat
+  }
+  monitorWiFi();                  //ensure wifi is always reconnected if disconnected
+  vTaskDelay(3);
 }
 
 //Report a hardware/firmware error to the server
@@ -185,16 +141,9 @@ void reportError(char* error, Code error_type) {
   #if (DEBUG == 1)
   USE_SERIAL.println(result);
   #endif
-  ptrSocketio->emit("hardwareerror", result.c_str());
+  ptr_mqtt->publish(pub_error_log, result.c_str());
 }
 
-
-//Emit an event to the socket io server
-void emit(const char *event, const char *payload) {
-    ptrSocketio->emit(event, payload);
-}
-
-#if (CODE_NOT_IN_USE == 1)
 //Handle readsms event from the socketio server
 void readsms(const char *payload, size_t length) {
   // #if (DEBUG == 1)
@@ -240,35 +189,23 @@ void readsms(const char *payload, size_t length) {
     USE_SERIAL.printf("%s %i %i\n", READSMS, command, slot_id);
   #endif
 
-  if (slot_id == 1) {
-    // while(Serial1.availableForWrite() < 1);
-
-    slot1Task(); // check for sms that on sim and read them
-    readRecord("/redundantSMSs.txt");
-    //read from file system and replySocket(FS); 
-    
-
-    SimSlot1.flush();
+  if (slot_id > 0 && slot_id < 6) {
+    while(Serial1.availableForWrite() < 1) {}
+    Serial1.printf("%s %i %i", READSMS, command, slot_id); 
+    //Serial1.print(readsmsstr); 
+    Serial1.flush();
   }
-  else if (slot_id == 2) {
-    // while(Serial.availableForWrite() < 1) ;
-
-    slot2Task(); //todo : check for sms that on sim and read them
-    readRecord("/redundantSMSs.txt");
-
-    //read from file system and replySocket(FS); 
-
-    
-    SimSlot2.flush(); 
+  else if (slot_id > 5 && slot_id < 11) {
+    slot_id = slot_id-5;
+    while(Serial.availableForWrite() < 1) {}
+    Serial.printf("%s %i %i", READSMS, command, slot_id);
+    Serial.flush(); 
   }
-  else if (slot_id == 3) {
-    // while(Serial2.availableForWrite() < 1) ;
-
-    slot3Task(); //todo : check for sms that on sim and read them
-    readRecord("/redundantSMSs.txt");
-    //read from file system and replySocket(FS); 
-    
-    SimSlot3.flush(); 
+  else if (slot_id > 10 && slot_id < 16) {
+    slot_id = slot_id-10;
+    while(Serial2.availableForWrite() < 1) {}
+    Serial2.printf("%s %i %i", READSMS, command, slot_id);
+    Serial2.flush(); 
   }
 
   if(command == 1){
@@ -278,14 +215,16 @@ void readsms(const char *payload, size_t length) {
     if(ongoingTask>0)
         ongoingTask-- ;
   }
+  // Serial.print("ongoingTask : ");
+  // Serial.println(ongoingTask);
 }
 
 void read_sms_pend(const char *payload, size_t lenth){
   
-      #if (DEBUG == 1)
-      USE_SERIAL.print("read_sms_pend reports : ");
-      USE_SERIAL.println(payload);
-      #endif
+  // #if (DEBUG == 1)
+  USE_SERIAL.print("read_sms_pend reports : ");
+  USE_SERIAL.println(payload);
+  // #endif
 
   DynamicJsonDocument data(1024);
   deserializeJson(data, payload);
@@ -298,15 +237,15 @@ void read_sms_pend(const char *payload, size_t lenth){
       P_data += i;
       if (data.containsKey(P_data)) { // find key  data2
       JsonObject root = data[P_data];
-      #if (DEBUG == 1)
+      // #if (DEBUG == 1)
       USE_SERIAL.print(" this prints : ");
-      #endif
+      // #endif
       char valU[50];
       serializeJson(root,valU,sizeof valU);
-      #if (DEBUG == 1)
+      // #if (DEBUG == 1)
       USE_SERIAL.print("valU  :  ");
       USE_SERIAL.println(valU);
-      #endif
+      // #endif
 
       readsms(valU,sizeof valU);  //call read sms function
       delay(300);
@@ -314,26 +253,6 @@ void read_sms_pend(const char *payload, size_t lenth){
     }
   }
 }
-#endif
-
-// handle incoming messages
-void message(const char *payload, size_t length){
-  //  #if (DEBUG == 1)
-  USE_SERIAL.print("FROM MESSAGE I GOT : ");
-  USE_SERIAL.println(payload);
-  //  #endif
-   if(strstr(payload, "Connected")){
-     interval = connectedToServer;
-   }
-}
-
-// handle incoming messages
-void Logger(const char *payload, size_t length){
-   #if (DEBUG == 1)
-  USE_SERIAL.println(payload);
-   #endif
-}
-
 
 //handle check balance event from the socketio server
 void checkbal(const char *payload, size_t length) {
@@ -341,6 +260,7 @@ void checkbal(const char *payload, size_t length) {
   USE_SERIAL.printf("checkbal command: %s\n", payload);
   #endif
 
+//   //TaskHandle_t uart1_sock_handle, uart2_sock_handle, uart3_sock_handle;
    DynamicJsonDocument data(1024);
 
   DeserializationError err = deserializeJson(data, payload); 
@@ -520,7 +440,6 @@ void handleSockEvent(WStype_t type, uint8_t * payload, size_t length) {
 			USE_SERIAL.printf("[WSc] get text: %s\n", payload);
     #endif
 			// send message to server
-			// ptrWebSocket->sendTXT("message here");
 			break;
 		case WStype_BIN:
     #if DEBUG == 1
@@ -529,7 +448,6 @@ void handleSockEvent(WStype_t type, uint8_t * payload, size_t length) {
       //hexdump(payload, length);
 
       // send data to server
-      // ptrWebSocket->sendBIN(payload, length);
     break;
     case WStype_PING:
         // pong will be send automatically
@@ -546,5 +464,86 @@ void handleSockEvent(WStype_t type, uint8_t * payload, size_t length) {
     default:
       break;
     }
-
 }
+
+void mqttCallback(char* topic, uint8_t* message, unsigned int len) {
+  DEBUG_PRINT("Message arrived on topic: ");
+  DEBUG_PRINT(topic);
+  DEBUG_PRINT(". Message: ");
+  const char* msg = (char*)message;
+   
+    Serial.write(message, len);
+    Serial.println();
+  // for (unsigned int i = 0; i < len; i++) {
+  //   DEBUG_PRINT((char)message[i]);
+  //   messageTemp += (char)message[i];
+  // }
+  DEBUG_PRINTLN();
+
+  if (strcasecmp(topic, sub_read_sms) == 0) {
+    readsms(msg, len);
+  }
+  else if (strcasecmp(topic, sub_read_sms_pend) == 0) {
+    read_sms_pend(msg, len);
+  }
+  else if (strcasecmp(topic, sub_dial_ussd) == 0) {
+    execute_ussd(msg, len);
+  }
+  else if (strcasecmp(topic, sub_check_bal) == 0) {
+    checkbal(msg, len);
+  }
+  else if (strcasecmp(topic, sub_message) == 0) {
+    
+  }
+}
+//Initiate Connection the the MQTT Server
+boolean mqttConnect() {
+  if (WiFi.status() != WL_CONNECTED) {
+    return false;
+  }
+  DEBUG_PRINT("Connecting to ");
+  DEBUG_PRINT(broker_url);
+
+  if (!ptr_mqtt->connect(device_name, mqtt_username, mqtt_password)) {
+    DEBUG_PRINTLN(" fail");
+    //ESP.restart();
+    return false;
+  }
+  DEBUG_PRINTLN(" success");
+  ptr_mqtt->subscribe(sub_read_sms);
+  ptr_mqtt->subscribe(sub_dial_ussd);
+  ptr_mqtt->subscribe(sub_message);
+
+  return ptr_mqtt->connected();
+}
+
+void loopMqtt() {
+  //Handle Mqtt Hearbeat and processing
+  if (!ptr_mqtt->connected()) {
+    DEBUG_PRINTLN("=== MQTT NOT CONNECTED ===");
+    // Reconnect every 10 seconds
+    uint32_t t = millis();
+    if (t - last_reconnect_attempt > RECONNECT) {
+      last_reconnect_attempt = t;
+      if (mqttConnect()) {
+        last_reconnect_attempt = 0;
+        ptr_mqtt->loop();
+      }
+    }
+    delay(10);
+    return;
+  }
+  ptr_mqtt->loop();
+}
+
+void initMqtt()
+{
+  ptr_mqtt->setServer(broker_url, broker_port);
+  ptr_mqtt->setCallback(mqttCallback);
+  
+  #if (DEBUG == 1)
+    Serial.println("callback set");
+  #endif
+}
+
+#endif
