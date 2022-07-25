@@ -41,7 +41,7 @@ const char* broker_url = "cc1efd1a984746fa9c27447711a4c90e.s1.eu.hivemq.cloud";
 const char* mqtt_username = "testiot";  // MQTT username
 const char* mqtt_password = "rnrZjan6uBj83KS";  // MQTT password
 uint16_t broker_port = 8883;   //8884;  // 1883;
-char *secret_token="d5s011d5B4xVnrPoF3S0GKYP8DprV374qD3LfrFuv";
+char *secret_token="VLbrvWIxL7KCpCJFK07Wxv67XikNZyvy6Hi31PXOO34=";
 
 
 //Declare Objects
@@ -306,11 +306,11 @@ delay(2000);
     &sim_check,         //  Hanlder variable for the task
     1
     );      
-    /* 
+     
     
       // SimSlot1.println("ATD+2348161111269;");
-//       SimSlot2.println("ATD+2347082738974;"); //this
-//       SimSlot3.println("ATD+2347082738974;");*/
+      // SimSlot2.println("ATD+2348161111269;"); //this   2347082738974
+      // SimSlot3.println("ATD+2348161111269;");
 
 	// start the check update task
   // #endif
@@ -496,12 +496,15 @@ void loop() {
       }
 
     if(slot1Taskflag ==1 ){
+      USE_SERIAL.println("am here 1");
       slot1Task();
     }
     if(slot2Taskflag ==1 ){
+      USE_SERIAL.println("am here 2");
       slot2Task();
     }
     if(slot3Taskflag ==1 ){
+      USE_SERIAL.println("am here 3");
       slot3Task();
     }
 
@@ -523,12 +526,15 @@ void CheckSims( void * pvParameters ) // this should keep running in background
  {
    //first hard restart any module with no sim
    if(sim1_active == 0){
+    slot1Taskflag = 0;
      digitalWrite(SLOT_RST1,LOW);
    }
    if(sim2_active == 0){
+    slot2Taskflag = 0;
      digitalWrite(SLOT_RST2,LOW);
    }
    if(sim3_active == 0){
+    slot3Taskflag = 0;
      digitalWrite(SLOT_RST3,LOW);
    }
    vTaskDelay(120);
@@ -570,6 +576,8 @@ void CheckSims( void * pvParameters ) // this should keep running in background
    }
    if(sim2_active == 1){
         // SimSlot2.println("AT+CSPN?");
+      // SimSlot2.println("ATD+2348161111269;"); //this   2347082738974
+      // vTaskDelay(500);
         SimSlot2.println("AT+COPS?"); 
         // SimSlot2.println("AT+CNMI?");
    }

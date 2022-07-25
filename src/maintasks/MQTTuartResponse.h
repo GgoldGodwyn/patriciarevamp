@@ -864,14 +864,32 @@ void slot1Task(){
 slot1Taskflag = 0;
   //read all at once
   String datasub = "aaaa";
+      SimSlot1.println("ATE1");
+      delay(100);
+      SimSlot1.println("AT+CMGDA =\"DEL READ\"");
+      delay(300);
       SimSlot1.println("AT+CMGF=1");
-      vTaskDelay(500);
-      while(SimSlot1.available())SimSlot1.read();
-  SimSlot1.println("AT+CMGA");
+      delay(100);
+      SimSlot1.println("AT+CMGF=1");
+      delay(100);
+      while(SimSlot1.available()){
+        char c = SimSlot1.read();
+        #if(DEBUG == 1)
+          Serial.print(c);
+        #endif
+        delayMicroseconds(1050);    
+      //   SimSlot1.read();
+      // delay(2);
+      }
+  delay(100);
+  SimSlot1.println("AT+CMGL=\"ALL\"");
   delay(500);
   if ( SimSlot1.available() >= 1){
   while(SimSlot1.available()){
     char c = SimSlot1.read();
+        #if(DEBUG == 1)
+          Serial.print(c);
+        #endif
     datasub.concat(c);
     delayMicroseconds(1050); 
     }
@@ -906,14 +924,32 @@ void slot2Task(){
 slot2Taskflag = 0;
   //read all at once
   String datasub = "aaaa ";
+      SimSlot2.println("ATE1");
+      delay(100);
       SimSlot2.println("AT+CMGF=1");
-      vTaskDelay(500);
-      while(SimSlot2.available())SimSlot2.read();
-  SimSlot2.println("AT+CMGA");
+      delay(100);
+      SimSlot2.println("AT+CMGDA =\"DEL READ\"");
+      delay(300);
+      SimSlot2.println("AT+CMGF=1");
+      delay(100);
+      while(SimSlot2.available()){
+        char c = SimSlot2.read();
+        #if(DEBUG == 1)
+          Serial.print(c);
+        #endif
+        delayMicroseconds(1050);   
+      // SimSlot2.read();
+      // delay(2);
+      }
+  delay(100);
+  SimSlot2.println("AT+CMGL=\"ALL\"");
   delay(500);
   if ( SimSlot2.available() >= 1){
   while(SimSlot2.available()){
     char c = SimSlot2.read();
+        #if(DEBUG == 1)
+          Serial.print(c);
+        #endif
     datasub.concat(c);
     delayMicroseconds(1050); 
     }
@@ -950,18 +986,35 @@ void slot3Task(){
   //read all at once
   slot3Taskflag = 0;
   String datasub = "aaaa ";
+      SimSlot3.println("ATE1");
+      delay(100);
       SimSlot3.println("AT+CMGF=1");
-      delay(500);
-      while(SimSlot3.available())SimSlot3.read();
-  SimSlot3.println("AT+CMGA");
+      delay(100);
+      SimSlot3.println("AT+CMGDA =\"DEL READ\"");
+      delay(300);
+      SimSlot3.println("AT+CMGF=1");
+      delay(100);
+      while(SimSlot3.available()){
+        char c = SimSlot3.read();
+        #if(DEBUG == 1)
+          Serial.print(c);
+        #endif
+        delayMicroseconds(1050);   
+      // SimSlot3.read();
+      // delay(2);
+      }
+  delay(100);
+  SimSlot3.println("AT+CMGL=\"ALL\"");
   delay(500);
   if ( SimSlot3.available() >= 1){
-  while(SimSlot3.available()){
-    char c = SimSlot3.read();
-    datasub.concat(c);
-    delay(2);
-    // delayMicroseconds(1050); 
-    }
+    while(SimSlot3.available()){
+      char c = SimSlot3.read();
+        #if(DEBUG == 1)
+          Serial.print(c);
+        #endif
+      datasub.concat(c);
+      delayMicroseconds(1050); 
+      }
   }
   
     #if (DEBUG == 1)

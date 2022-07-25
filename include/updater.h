@@ -288,9 +288,6 @@ String url = "/glover-a2c-server/public/api/ota-updates/latest/ HTTP/1.1";
   
 	#endif
 
-
-
-
 //1800000 30mins
         vTaskDelay(20000 / portTICK_PERIOD_MS);
     }
