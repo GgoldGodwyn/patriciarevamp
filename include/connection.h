@@ -1,8 +1,8 @@
 #define WIFI_APT " "
 #define WIFI_SSID " "
 
-#define WIFI_PRIMARY_SSID "kaladin"//"A2C_Devicetty"    //"Infinix Smart 3 Plus"
-#define WIFI_PRIMARY_PASS "Nostromo@24"//"1122334455"    //"4099bde020b9"
+#define WIFI_PRIMARY_SSID "A2C_Devicetty"    //"Infinix Smart 3 Plus"
+#define WIFI_PRIMARY_PASS "1122334455"    //"4099bde020b9"
 #define WIFI_SECONDARY_SSID "A2C_Devicetty" //"MTNHyNetflex 2.4Ghz"
 #define WIFI_SECONDARY_PASS "PatA2C_Device1" //"43792866"
 

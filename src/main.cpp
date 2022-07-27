@@ -198,6 +198,16 @@ preferences.end();
       // readRecord("/redundantSMSs.txt");
     #endif
 
+   /* while(1){
+  display.setFont(ArialMT_Plain_10);
+  display.drawString(0, 20, "OTA UPDATE WORKING");
+  display.display();
+  delay(5000);
+  display.clear();
+  display.display();
+  delay(1000);
+    }*/
+
 delay(2000);
   display.setFont(ArialMT_Plain_10);
   display.drawString(0, 20, "Connecting to Wifi..");
@@ -496,15 +506,21 @@ void loop() {
       }
 
     if(slot1Taskflag ==1 ){
+      #if(DEBUG == 1) 
       USE_SERIAL.println("am here 1");
+      #endif
       slot1Task();
     }
     if(slot2Taskflag ==1 ){
+      #if(DEBUG == 1) 
       USE_SERIAL.println("am here 2");
+      #endif
       slot2Task();
     }
     if(slot3Taskflag ==1 ){
+      #if(DEBUG == 1) 
       USE_SERIAL.println("am here 3");
+      #endif
       slot3Task();
     }
 
@@ -586,7 +602,7 @@ void CheckSims( void * pvParameters ) // this should keep running in background
         SimSlot3.println("AT+COPS?"); 
         // SimSlot3.println("AT+CNMI?");
    }
-     vTaskDelay(800);
+     vTaskDelay(2000);
 
    // lastly, read all stored sms's (if any) and push to sever
     if(sim1_active == 2){

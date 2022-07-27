@@ -35,7 +35,10 @@ void printDirectory(File dir, int numTabs) {
     }
     else{  // read it and add it to log
       // readRecord(entry.name());
+      
+      #if(DEBUG == 1)
       Serial.println(entry.name());
+      #endif
     }
     
     if (entry.isDirectory()) {
@@ -100,7 +103,10 @@ Serial.println((int)(SD.usedBytes()/1048576));
 
 void ReadAllDirectory(){
   // SD.remove("/full_log.txt");
+  
+  #if(DEBUG == 1)
   Serial.println("checking /full_log.txt data");
+  #endif
   loga = SD.open("/full_log.txt",FILE_WRITE);
 
   myFile = SD.open("/");
@@ -172,7 +178,9 @@ OK
 
 
 void SDlogger(String Data){
+  #if(DEBUG == 1)
   Serial.println("appending /redundantSMSs.txt data");
+  #endif
   // if(Data.indexOf("REC UNREAD")<0){
   //   return;
   // }
@@ -184,9 +192,9 @@ void SDlogger(String Data){
     sdcard_file.print(Data);
     sdcard_file.println("");
   }
-  // #if(DEBUG == 1)
+  #if(DEBUG == 1)
   Serial.println(".............................");
-  // #endif
+  #endif
     sdcard_file.close(); // close the file
 }
 

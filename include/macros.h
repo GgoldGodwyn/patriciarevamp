@@ -7,6 +7,9 @@
 #define COMMENT           1
 #define CODE_NOT_IN_USE   0
 #define TEST_CASH_DUMP    0
+#define myHTTP 0
+#define myHTTPS 1
+#define serverType myHTTP
 
 #define hasMMC 1 // very important
 
@@ -14,9 +17,8 @@
 
     // extras for OTA update
     float ESP32firmware_version = 1.0;  // Set your firmware version here. Your other sketch should have a different version number.
-    #define UPDATE_JSON_URL		"https://xyz.org/https_ota/firmware.json"
-    String serverName = "http://192.168.43.31:8000";
-    // String serverName = "30dd-102-89-33-97.eu.ngrok.io";
+    // String serverName = "http://192.168.43.31:8000";
+    String serverName = "http://atoc.gloverapp.co";
     String otalink = "";
     int reloadFlag = 0;
 

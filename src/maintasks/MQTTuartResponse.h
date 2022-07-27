@@ -123,8 +123,10 @@ void replySocket(String data){
 
 // get epoch time      
 unsigned long epochTime = getTime();
+#if(DEBUG == 1)
   Serial.print("Epoch Time: ");
   Serial.println(epochTime);
+#endif
 
 
 
@@ -151,13 +153,17 @@ unsigned long epochTime = getTime();
   mbedtls_md_hmac_update(&ctx, (const unsigned char *) data.c_str(), payloadLength);
   mbedtls_md_hmac_finish(&ctx, hmacResult);
   mbedtls_md_free(&ctx);
+  #if(DEBUG == 1)
   Serial.print("hmac : ");
+  #endif
     for(int i= 0; i< sizeof(hmacResult); i++){
       char str[3];
       sprintf(str, "%02x", (int)hmacResult[i]);
+      #if(DEBUG == 1)
       Serial.print(str);
+      #endif
   }
-  Serial.println(" ");
+  
 
       // sprintf(msg, "%lld%ld", current_time,current_millis);
 //hmacResult
@@ -168,10 +174,14 @@ unsigned long epochTime = getTime();
       char str[3];
       for(int i= 0; i< sizeof(hmacResult); i++){
         sprintf(str, "%02x", (int)hmacResult[i]);
+        #if(DEBUG == 1)
         Serial.print(str);
+        #endif
         fingerP+=str;
         }
+        #if(DEBUG == 1)
         Serial.println();
+        #endif
 
 
       doc["fingerprint"] = fingerP;
@@ -223,7 +233,9 @@ unsigned long epochTime = getTime();
    
       //wsEmit(data.c_str());
       mqtt_client.publish(pub_handle_sms, data.c_str());
+      #if(DEBUG == 1)
       Serial.println(data);
+      #endif
       // mqtt_client.publish(pub_handle_sms, "pat-i",true);
     }
 
@@ -864,8 +876,8 @@ void slot1Task(){
 slot1Taskflag = 0;
   //read all at once
   String datasub = "aaaa";
-      SimSlot1.println("ATE1");
-      delay(100);
+      // SimSlot1.println("ATE1");
+      // delay(100);
       SimSlot1.println("AT+CMGDA =\"DEL READ\"");
       delay(300);
       SimSlot1.println("AT+CMGF=1");
@@ -924,8 +936,8 @@ void slot2Task(){
 slot2Taskflag = 0;
   //read all at once
   String datasub = "aaaa ";
-      SimSlot2.println("ATE1");
-      delay(100);
+      // SimSlot2.println("ATE1");
+      // delay(100);
       SimSlot2.println("AT+CMGF=1");
       delay(100);
       SimSlot2.println("AT+CMGDA =\"DEL READ\"");
@@ -986,8 +998,8 @@ void slot3Task(){
   //read all at once
   slot3Taskflag = 0;
   String datasub = "aaaa ";
-      SimSlot3.println("ATE1");
-      delay(100);
+      // SimSlot3.println("ATE1");
+      // delay(100);
       SimSlot3.println("AT+CMGF=1");
       delay(100);
       SimSlot3.println("AT+CMGDA =\"DEL READ\"");

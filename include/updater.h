@@ -7,26 +7,6 @@ float releaseVersion ;
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 /**
  * This is lets-encrypt-x3-cross-signed.pem
  */
@@ -60,121 +40,71 @@ const char* rootCACertificate = \
 "-----END CERTIFICATE-----\n";
 
 
-#if(CODE_NOT_IN_USE)
-#include <string.h>
-
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-#include "cJSON.h"
-#include "esp_system.h"
-#include "esp_log.h"
-#include "esp_http_client.h"
-#include "esp_https_ota.h"
-#include "config.h"
 
 
-// server certificates
-extern const char server_cert_pem_start[] asm("_binary_certs_pem_start");
-extern const char server_cert_pem_end[] asm("_binary_certs_pem_end");
+#if(serverType == myHTTPS)
+//Using HTTPS UPDATE
+#include "HttpsOTAUpdate.h"
 
-// receive buffer
-char rcv_buffer[200];
+int UpdateInprogress = 0;
 
-// esp_http_client event handler
-esp_err_t _http_event_handler(esp_http_client_event_t *evt) {
-    
-	switch(evt->event_id) {
+static HttpsOTAStatus_t otastatus;
+
+void HttpEvent(HttpEvent_t *event)
+{
+    switch(event->event_id) {
         case HTTP_EVENT_ERROR:
+            Serial.println("Http Event Error");
             break;
         case HTTP_EVENT_ON_CONNECTED:
+            Serial.println("Http Event On Connected");
             break;
         case HTTP_EVENT_HEADER_SENT:
+            Serial.println("Http Event Header Sent");
             break;
         case HTTP_EVENT_ON_HEADER:
+            Serial.printf("Http Event On Header, key=%s, value=%s\n", event->header_key, event->header_value);
             break;
         case HTTP_EVENT_ON_DATA:
-            if (!esp_http_client_is_chunked_response(evt->client)) {
-				strncpy(rcv_buffer, (char*)evt->data, evt->data_len);
-            }
             break;
         case HTTP_EVENT_ON_FINISH:
+            Serial.println("Http Event On Finish");
             break;
         case HTTP_EVENT_DISCONNECTED:
+            Serial.println("Http Event Disconnected");
             break;
     }
-    return ESP_OK;
 }
 
-// Check update task
-// downloads every 30sec the json file with the latest firmware
-void check_update_task(void * pvParameters ) {
-	while(1) {
-        
-		printf("Looking for a new firmware...\n");
-	
-		// configure the esp_http_client
-		// esp_http_client_config_t config 
-		esp_http_client_config_t config= {
-            // .url = UPDATE_JSON_URL,
-            // .event_handler = _http_event_handler,
-            url : UPDATE_JSON_URL,
-            // event_handler : _http_event_handler,
-            };
-		esp_http_client_handle_t client = esp_http_client_init(&config);
-	
-		// downloading the json file
-		esp_err_t err = esp_http_client_perform(client);
-		if(err == ESP_OK) {
-			
-			// parse the json file	
-			cJSON *json = cJSON_Parse(rcv_buffer);
-			if(json == NULL) printf("downloaded file is not a valid json, aborting...\n");
-			else {	
-				cJSON *version = cJSON_GetObjectItemCaseSensitive(json, "version");
-				cJSON *file = cJSON_GetObjectItemCaseSensitive(json, "file");
-				
-				// check the version
-				if(!cJSON_IsNumber(version)) printf("unable to read new version, aborting...\n");
-				else {
-					
-					double new_version = version->valuedouble;
-					if(new_version > ESP32firmware_version) {
-						
-						printf("current firmware version (%.1f) is lower than the available one (%.1f), upgrading...\n", ESP32firmware_version, new_version);
-						if(cJSON_IsString(file) && (file->valuestring != NULL)) {
-							printf("downloading and installing new firmware (%s)...\n", file->valuestring);
-							
-							esp_http_client_config_t ota_client_config = {
-								.url = file->valuestring,
-								//.cert_pem = server_cert_pem_start,
-							};
-							esp_err_t ret = esp_https_ota(&ota_client_config);
-							if (ret == ESP_OK) {
-								printf("OTA OK, restarting...\n");
-								esp_restart();
-							} else {
-								printf("OTA failed...\n");
-							}
-						}
-						else printf("unable to read the new file name, aborting...\n");
-					}
-					else printf("current firmware version (%.1f) is greater or equal to the available one (%.1f), nothing to do...\n", ESP32firmware_version, new_version);
-				}
-			}
-		}
-		else printf("unable to download the json file, aborting...\n");
-		
-		// cleanup
-		// esp_http_client_cleanup(client);
-		
-		printf("\n");
-        vTaskDelay(30000 / portTICK_PERIOD_MS);
+void checkForESPupdate(){
+    if((WiFi.status() == WL_CONNECTED)) {
+      otalink = serverName + otalink;
+      HttpsOTA.onHttpEvent(HttpEvent);
+      Serial.println("Starting OTA");
+      HttpsOTA.begin(otalink.c_str(), rootCACertificate); 
+
+    Serial.println("Please Wait it takes some time ...");
+    UpdateInprogress = 1;
+    
     }
-	}
+}
+
 #endif
 
-void checkForESPupdate() {
+
+
+#if(serverType == myHTTP)
+//Using HTTP UPDATE
+  void checkForESPupdate() {
 	// printf("HTTPS OTA, firmware %.1f\n\n", ESP32firmware_version);
+
+  /*      HTTPClient http;
+  String link = serverName + otalink;
+  Serial.println(link);
+      http.begin(link.c_str());
+      int respCode = http.GET();
+      Serial.println(respCode);
+      Serial.println("done");*/
 	
     if((WiFi.status() == WL_CONNECTED)) {
     // WiFiClientSecure client;
@@ -182,9 +112,14 @@ void checkForESPupdate() {
 // // client, https://
 
 		otalink = serverName + otalink;
+    // Serial.println(serverName);
+    // Serial.println(otalink);
+      //http://192.168.43.31:8000/storage/otabins/otabin.bin
+// Serial.println("awaiting response");
 		ESPhttpUpdate.rebootOnUpdate(false);
-        t_httpUpdate_return ret = ESPhttpUpdate.update(otalink.c_str());//,"1.0",rootCACertificate,true);
-
+// Serial.println("updating binary file");
+        t_httpUpdate_return ret = ESPhttpUpdate.update(otalink.c_str());
+// Serial.println("got response");
         switch(ret) {
             case HTTP_UPDATE_FAILED:
                 USE_SERIAL.printf("HTTP_UPDATE_FAILD Error (%d): %s/r/n", ESPhttpUpdate.getLastError(), ESPhttpUpdate.getLastErrorString().c_str());
@@ -206,89 +141,87 @@ void checkForESPupdate() {
 	
 }
 
+#endif
 
 
+
+//  compulsory task running in background
 void check_update_task(void * pvParameters ) {
 	while(1) {
 
         HTTPClient http;
 
       // String serverPath = serverName;
-      String serverPath = serverName + "/api/ota-updates/latest/";
+      String serverPath = serverName + "/api/ota-updates/latest";
       
       // Your Domain name with URL path or IP address with path
+      #if(serverType == myHTTP)
       http.begin(serverPath.c_str());
+      #else if(serverType == myHTTPS)
+      http.begin(serverPath.c_str(), rootCACertificate);
+      #endif
+
       
-      http.addHeader("api-key","live-a7985002-832e-4dbf-ac4a-25c99b78327c");
+      http.addHeader("api-key","live-c67462b3-364c-4d57-bdf0-9f5a610965ee");
       // Send HTTP GET request
       int httpResponseCode = http.GET();
       
       if (httpResponseCode>0) {
-        // Serial.println(httpResponseCode);
+        #if(DEBUG == 1)
+        Serial.println(httpResponseCode);
+        #endif
         String payload = http.getString();
-		// Serial.println(payload);
-		DynamicJsonDocument doc(1024);
-		deserializeJson(doc, payload);
+        #if(DEBUG == 1)
+          Serial.println(payload);
+        #endif
+        DynamicJsonDocument doc(1024);
+        deserializeJson(doc, payload);
 
-		releaseVersion = doc["data"]["version"];
-    // Serial.print("version is ");
-    // Serial.println(releaseVersion);
+        releaseVersion = doc["data"]["version"];
+        #if(DEBUG == 1)
+          Serial.print("version is ");
+          Serial.println(releaseVersion);
+        #endif
 
-		if(releaseVersion>ESP32firmware_version){
-		printf("Looking for a new firmware...\n");
-    String buf = doc["data"]["file_path"];
-    otalink = "/storage"+ buf ;
-		checkForESPupdate();
-		}
-		else{
-        // Serial.println("releaseVersion is lesser than or the same");
-		}
+        if(releaseVersion>ESP32firmware_version){
+          #if(DEBUG == 1)
+            printf("Looking for a new firmware...\n");
+          #endif
+          String buf = doc["data"]["file_path"];
+          otalink = "/storage"+ buf ;  // /storage/gdht3.bin
+            checkForESPupdate();
+        }
+        else{
+          #if(DEBUG == 1)
+            Serial.println("releaseVersion is lesser than or the same");
+          #endif
+        }
       }
       else {
-        Serial.print("Error code: ");
-        Serial.println(httpResponseCode);
+        #if(DEBUG == 1)
+          Serial.print("Error code: ");
+          Serial.println(httpResponseCode);
+        #endif
       }
       // Free resources
       http.end();
-#if (CODE_NOT_IN_USE)	
-  // Use WiFiClient class to create TCP connections
-  WiFiClientSecure client;
-  const int httpPort = 80; // 80 is for HTTP / 443 is for HTTPS!
 
-  client.setInsecure(); // this is the magical line that makes everything work
-  
-  if (!client.connect(serverName.c_str(), httpPort)) { //works!
-    Serial.println("connection failed");
+  #if(serverType == myHTTPS)
+  if(UpdateInprogress == 1){
+    otastatus = HttpsOTA.status();
+    if(otastatus == HTTPS_OTA_SUCCESS) { 
+      // todo, comment on DEBUG
+        Serial.println("Firmware written successfully. To reboot device, call API ESP.restart() or PUSH restart button on device");
+        esp_restart();
+    } else if(otastatus == HTTPS_OTA_FAIL) {       
+      // todo, comment on DEBUG
+        Serial.println("Firmware Upgrade Fail");
+    }
   }
-String url = "/glover-a2c-server/public/api/ota-updates/latest/ HTTP/1.1";
-  Serial.print("Requesting URL: ");
-  Serial.println(url);
-
-  // This will send the request to the server
-  client.print(String("GET ") + url + " HTTP/1.1\r\n" +"Host: " + serverName.c_str() + "\r\n" + "api-key: live-0f2cd81c-0f9b-4368-9683-22f5d7e83d08"+"Connection: close\r\n\r\n");
-
-  Serial.println();
-  Serial.println("closing connection");
-  
-    while (client.connected()) {
-      String line = client.readStringUntil('\n');
-      if (line == "\r") {
-        Serial.println("headers received");
-        break;
-      }
-    }
-    // if there are incoming bytes available
-    // from the server, read them and print them:
-    while (client.available()) {
-      char c = client.read();
-      Serial.write(c);
-    }
-
-    client.stop();
-  
-	#endif
+  #endif
 
 //1800000 30mins
         vTaskDelay(20000 / portTICK_PERIOD_MS);
     }
 	}
+
