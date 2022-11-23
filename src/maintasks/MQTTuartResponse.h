@@ -121,12 +121,12 @@ void replySocket(String data){
       //before is 
       // datasub = base64::encode(data);
 
-// get epoch time      
-unsigned long epochTime = getTime();
-#if(DEBUG == 1)
-  Serial.print("Epoch Time: ");
-  Serial.println(epochTime);
-#endif
+      // get epoch time      
+      unsigned long epochTime = getTime();
+      #if(DEBUG == 1)
+        Serial.print("Epoch Time: ");
+        Serial.println(epochTime);
+      #endif
 
 
 
@@ -139,30 +139,32 @@ unsigned long epochTime = getTime();
       DynamicJsonDocument doc(datasub.length() + 200);
       doc["message"] = datasub;
       
-      data = epochTime + data;
+      data = epochTime;
+      data +='.';
+      data += datasub;
 
-//hmac sha256
-  byte hmacResult[32];
-  mbedtls_md_context_t ctx;
-  mbedtls_md_type_t md_type = MBEDTLS_MD_SHA256;
-  const size_t payloadLength = strlen(data.c_str());
-  const size_t keyLength = strlen(secret_token);            
-  mbedtls_md_init(&ctx);
-  mbedtls_md_setup(&ctx, mbedtls_md_info_from_type(md_type), 1);
-  mbedtls_md_hmac_starts(&ctx, (const unsigned char *) secret_token, keyLength);
-  mbedtls_md_hmac_update(&ctx, (const unsigned char *) data.c_str(), payloadLength);
-  mbedtls_md_hmac_finish(&ctx, hmacResult);
-  mbedtls_md_free(&ctx);
-  #if(DEBUG == 1)
-  Serial.print("hmac : ");
-  #endif
-    for(int i= 0; i< sizeof(hmacResult); i++){
-      char str[3];
-      sprintf(str, "%02x", (int)hmacResult[i]);
+      //hmac sha256
+      byte hmacResult[32];
+      mbedtls_md_context_t ctx;
+      mbedtls_md_type_t md_type = MBEDTLS_MD_SHA256;
+      const size_t payloadLength = strlen(data.c_str());
+      const size_t keyLength = strlen(secret_token.c_str());            
+      mbedtls_md_init(&ctx);
+      mbedtls_md_setup(&ctx, mbedtls_md_info_from_type(md_type), 1);
+      mbedtls_md_hmac_starts(&ctx, (const unsigned char *) secret_token.c_str(), keyLength);
+      mbedtls_md_hmac_update(&ctx, (const unsigned char *) data.c_str(), payloadLength);
+      mbedtls_md_hmac_finish(&ctx, hmacResult);
+      mbedtls_md_free(&ctx);
       #if(DEBUG == 1)
-      Serial.print(str);
+      Serial.print("hmac : ");
       #endif
-  }
+      for(int i= 0; i< sizeof(hmacResult); i++){
+        char str[3];
+        sprintf(str, "%02x", (int)hmacResult[i]);
+        #if(DEBUG == 1)
+        Serial.print(str);
+        #endif
+    }
   
 
       // sprintf(msg, "%lld%ld", current_time,current_millis);
@@ -203,7 +205,7 @@ unsigned long epochTime = getTime();
    
     if (!mqtt_client.connected()) {    
       newInfo = 1; 
-    if (mqtt_client.connect(device_name,mqtt_username,mqtt_password)) {
+    if (mqtt_client.connect(device_name.c_str(),mqtt_username.c_str(),mqtt_password.c_str())) {
       mqtt = 1;
       #if(DEBUG == 1)
       USE_SERIAL.println("just connected ins");
@@ -487,9 +489,15 @@ while(SimSlot1.available()){
   }
 
     // +CMTI: "SM",32 hi, we are testing for unsolicited messages
-    //aaaa +CMGR: "REC UNREAD","a2c","","21/08/12,14:37:45+04" Trans User 1 you have been credited with N1814 by the code 9041315965 OK
+    /*
+    aaaa +CMGR: "REC UNREAD","a2c","","21/08/12,14:37:45+04" 
+    Trans User 1 you have been credited with N1814 by the code 9041315965 
+    
+    OK
+    
+    */
     /* FOR MTN
-    +CMGL: 16,"REC UNREAD","777","","20/09/23,11:22:51+04"
+    aaaa +CMGL: 16,"REC UNREAD","777","","20/09/23,11:22:51+04"
 Congrats!
 You have received N50 airtime from 08036339292 via MTN Share.
 
@@ -500,7 +508,10 @@ OR
     */
 
    /*
-   +CMGR: "REC UNREAD","AirtelERC","","21/08/12,14:37:45+04" Txn Id C220505.1134.310009 of 500 NGN from 7082738974 is successful. Transferred value is 500 NGN, access fee is 0 NGN Your new balance is 500 and validity is 28/01/25.
+   aaaa +CMGR: "REC UNREAD","AirtelERC","","21/08/12,14:37:45+04" 
+   Txn Id C220505.1134.310009 of 500 NGN from 7082738974 is successful. Transferred value is 500 NGN, access fee is 0 NGN Your new balance is 500 and validity is 28/01/25. 
+   
+   OK
    */
     // datasub = "+CMTI: "SM",32 ";
   // Serial.print(datasub.indexOf("+CMTI",1));
@@ -818,7 +829,7 @@ void keepComms(){
     // device_name += String(random(0xffff), HEX);
     if (!mqtt_client.connected()) {   
       newInfo = 1;
-    if (mqtt_client.connect(device_name,mqtt_username,mqtt_password)) {
+    if (mqtt_client.connect(device_name.c_str(),mqtt_username.c_str(),mqtt_password.c_str())) {
       #if(DEBUG == 1)
       USE_SERIAL.println("just connected");
       #endif
@@ -1039,3 +1050,9 @@ void slot3Task(){
 
 
 #endif
+
+
+
+
+
+//replySocket("bbbb history_id : 12 AT+CUSD=1,4OK+CUSD: 0, Your data balance:Bonus: 20MB expires 02/11/2021 23:59:59,");

@@ -36,13 +36,18 @@ using namespace mDNSResolver;
 // MQTT details
 #define RECONNECT 10000UL
 uint32_t last_reconnect_attempt = 0;
-const char* broker_url = "cc1efd1a984746fa9c27447711a4c90e.s1.eu.hivemq.cloud";  
-// const char* broker_url = "test.mosquitto.org";                    // Public IP address or domain name
-const char* mqtt_username = "testiot";  // MQTT username
-const char* mqtt_password = "rnrZjan6uBj83KS";  // MQTT password
-uint16_t broker_port = 8883;   //8884;  // 1883;
-char *secret_token="VLbrvWIxL7KCpCJFK07Wxv67XikNZyvy6Hi31PXOO34=";
 
+String broker_url ;  
+String mqtt_username; 
+String mqtt_password;
+uint16_t broker_port; 
+String secret_token;
+
+
+
+#if deploy == 0
+  #include "defaultPreference.h" 
+#endif
 
 //Declare Objects
 WiFiClientSecure wifi_client;
@@ -97,12 +102,6 @@ void setup() {
   digitalWrite(SLOT_RST3,LOW);
   
   delay(1000); 
-  // wait for 15 sec for all sim module to initialise
-  // // turn ON all sim module
-  // digitalWrite(SLOT_RST1,HIGH);
-  // digitalWrite(SLOT_RST2,HIGH);
-  // digitalWrite(SLOT_RST3,HIGH);
-  // delay(4000);
   display.clear();
   display.setFont(ArialMT_Plain_10);
   display.drawString(0, 10, "Initialising all parameters");
@@ -148,19 +147,44 @@ void setup() {
     
 
 preferences.begin("my-app", false); 
-// preferences.clear();
-// preferences.remove(key);
 ESP32firmware_version = preferences.getFloat("version", 1);
-Serial.print("ESP32firmware_version is ");
-Serial.println(ESP32firmware_version);
-// putString(const char* key, const String value)
-// getString(const char* key, const String defaultValue)
+#if deploy == 0
+  setupPreference();
+#endif
+
+broker_url = preferences.getString("brokeURL","  ");
+mqtt_username  = preferences.getString("mqttUSN", "  ");
+mqtt_password  = preferences.getString("mqttPSD", "  ");
+broker_port  = preferences.getInt("mqttPORT", 1000);
+secret_token  = preferences.getString("mqttSekTok", "   ");
+device_name = preferences.getString("device_name", "  ");
+serverName = preferences.getString("serverName", "  ");
+
+// #if deploy == 0
+  Serial.print("serverName is ");
+  Serial.println(serverName);
+  Serial.print("device_name is ");
+  Serial.println(device_name);
+  Serial.print("secret_token is ");
+  Serial.println(secret_token);
+  Serial.print("broker_port is ");
+  Serial.println(broker_port);
+  Serial.print("mqtt_password is ");
+  Serial.println(mqtt_password);
+  Serial.print("mqtt_username is ");
+  Serial.println(mqtt_username);
+  Serial.print("broker_url is ");
+  Serial.println(broker_url);
+  Serial.print("ESP32firmware_version is ");
+  Serial.println(ESP32firmware_version);
+// #endif
+
+
 preferences.end();
 
 
-  // to save a messege use createAndWriteFile(String buff); where buff is the message from the promini/sim module
+// to save a messege use createAndWriteFile(String buff); where buff is the message from the promini/sim module
   
-//replySocket("bbbb history_id : 12 AT+CUSD=1,4OK+CUSD: 0, Your data balance:Bonus: 20MB expires 02/11/2021 23:59:59,");
   xTaskCreatePinnedToCore(  //PIN socketIO to core 1
     blinkerLED,         //Point to the tasks function
     "blinkerTask",       //name indentifier for the task
@@ -189,24 +213,8 @@ preferences.end();
             int b = 4;
             Serial.printf("%d\n", b / a);
       #endif
-  ///////
-        // slot1Task(); // check for sms that on sim and read them
-        // slot2Task(); // check for sms that on sim and read them
-        // slot3Task(); // check for sms that on sim and read them
-
-      // createAndWriteFile(" aaaa");
-      // readRecord("/redundantSMSs.txt");
     #endif
 
-   /* while(1){
-  display.setFont(ArialMT_Plain_10);
-  display.drawString(0, 20, "OTA UPDATE WORKING");
-  display.display();
-  delay(5000);
-  display.clear();
-  display.display();
-  delay(1000);
-    }*/
 
 delay(2000);
   display.setFont(ArialMT_Plain_10);
@@ -216,7 +224,6 @@ delay(2000);
 initWiFi();
 
 
-// #if(CODE_NOT_IN_USE)
 
     #if(channel != MqttChannel)
 
@@ -318,163 +325,24 @@ delay(2000);
     );      
      
     
-      // SimSlot1.println("ATD+2348161111269;");
-      // SimSlot2.println("ATD+2348161111269;"); //this   2347082738974
-      // SimSlot3.println("ATD+2348161111269;");
+      // SimSlot1.println("ATD+2348161111269;"); //uncomment to test sim modules
+      // SimSlot2.println("ATD+2348161111269;"); //uncomment to test sim modules
+      // SimSlot3.println("ATD+2348161111269;"); //uncomment to test sim modules
 
-	// start the check update task
-  // #endif
+
+
+
 	xTaskCreate(check_update_task, "check_update_task", 8192, NULL, 5, NULL);
 
-
 }
 
-/*
-// and this
-void reconnect() {
-  // Loop until we're reconnected
-  while (!mqtt_client.connected()) {
-    Serial.print("Attempting MQTT connection...");
-    // Create a random client ID
-    String clientId = "device_1";
-    clientId += String(random(0xffff), HEX);
-    // Attempt to connect
-    if (mqtt_client.connect(clientId.c_str(),mqtt_username,mqtt_password)) {
-      Serial.println("connected");
-      //Once connected, publish an announcement...
-      mqtt_client.publish("device_1/message", "hello world");
-      // ... and resubscribe
-      mqtt_client.subscribe(sub_read_sms);
-    } else {
-      Serial.print("failed,");
-      Serial.print(mqtt_client.state());
-      Serial.println("try again in 5 seconds");
-      // Wait 5 seconds before retrying
-      delay(5000);
-    }
-  }
-}
-
-
-
-void setup2() {
-  pinMode(LED_BLINKER, OUTPUT);
-  pinMode(34, OUTPUT);
-
-  Serial.begin(HARD_BAUD);
-  
-  Serial1.begin(HARD_BAUD, SERIAL_8N1, RXD1, TXD1);
-  
-  Serial2.begin(HARD_BAUD, SERIAL_8N1, RXD2, TXD2);
-
-  Serial1.println("Serial1");
-  Serial2.println("Serial2");
-  
-  //replySocket("bbbb history_id : 12 AT+CUSD=1,4OK+CUSD: 0, Your data balance:Bonus: 20MB expires 02/11/2021 23:59:59,");
-  xTaskCreatePinnedToCore(  //PIN socketIO to core 1
-    blinkerLED,         //Point to the tasks function
-    "blinkerTask",       //name indentifier for the task
-    20480,                    //stack size of the task
-    NULL,                     //parameters of the task
-    2,                        //priority of the task
-    &SocketioHandle,         //  Hanlder variable for the task
-    1
-    );
-
-  delay(2000);
-  initWiFi();
-  setupDateTime();
-
-  mqtt_client.setBufferSize(1024);
-  setMqttClientPtr(&mqtt_client);   //modified
-  setWebsocketPtr(&client);
-  initMqtt();
-
-
-//changed to 
-  mqtt_client.setServer(broker_url, broker_port);
-  mqtt_client.setCallback(mqttCallback);
-  // reconnect();
-
-
-	// server address, port and URL
-  #if(DEBUG == 1)
-  USE_SERIAL.print("Resolving ");
-  USE_SERIAL.println(ws_domain);
-  #endif
-
-  resolver.setLocalIP(WiFi.localIP());
-
-  IPAddress ip = resolver.search(ws_domain);
-  for(int u = 0; u<5; u++){
-    break; // remove this on deployment
-  // while(true) {
-    if (ip != INADDR_NONE && !ip.toString().equals("0.0.0.0")) {
-      ws_domain_resolved = true;
-      break;
-    }
-    #if(DEBUG == 1)
-    USE_SERIAL.println("Not resolved");
-    #endif
-    ip = resolver.search(ws_domain);
-  }
-  #if(DEBUG == 1)
-  USE_SERIAL.print("Resolved: ");
-  USE_SERIAL.println(ip);
-  #endif
-
-  if (ws_domain_resolved) {
-    client.begin(ip.toString(), WS_PORT);
-
-    // use HTTP Basic Authorization this is optional remove if not needed
-    //client.setAuthorization(ws_username, ws_userpass);
-
-    // try ever 5000 again if connection has failed
-    client.setReconnectInterval(WS_RECONNECT_INTERVAL);
-    
-    // start heartbeat (optional)
-    client.enableHeartbeat(WS_PING_INTERVAL, WS_PONG_INTERVAL, WS_DISCONNECT_TIMEOUT_COUNT);
-
-    // event handler
-    client.onEvent(handleSockEvent);
-  }
-
-  // SerialBT.printf("Finish BOOTING...\n");
-  Serial.flush();
-  Serial1.flush();
-  Serial2.flush();
-}
-
-void publishSerialData(char *serialData){
-  if (!mqtt_client.connected()) {
-    reconnect();
-  }
-  mqtt_client.publish(pub_message, serialData);
-  mqtt_client.publish(sub_read_sms, "hi");
-}
-
-*/
-//Program will run mainly here
 void loop() {
 
-  /*  
-   client.loop();
-   if (Serial.available() > 0) {
-     char mun[501];
-     memset(mun,0, 501);
-     Serial.readBytesUntil( '\n',mun,500);
-     publishSerialData(mun);
-     Serial.println("sent");
-   }
-*/
-
-  // GO! Run the scheduler - it never returns.
-  // scheduler.runTasks();
    displayInfo();
    loopSocket();
    keepComms();
    
-  if(reloadFlag==1){
+  if(reloadFlag==1){  // if a new update from OTA is avalable
     Serial.println("restarting system now!!!");
     vTaskDelete( sim_check );
     digitalWrite(SLOT_RST1,LOW);
@@ -500,8 +368,8 @@ void loop() {
       if(SimSlot1.available() >= 1){
       #if (DEBUG == 1)
         USE_SERIAL.print(F("REACH HERE: slot 1"));
-      #endif
         Serial.println(" pingVerified is = 0");
+      #endif
         SimSlot1getResponse();
       }
 
@@ -586,14 +454,12 @@ void CheckSims( void * pvParameters ) // this should keep running in background
 
    // third is to get sim get the service provider name from the SIM and specify how newly arrived SMS messages should be handled
    if(sim1_active == 1){
-    //  SimSlot1.println("AT+CSPN?"); 
-     SimSlot1.println("AT+COPS?"); 
+    //  SimSlot1.println("AT+CSPN?"); // this provice Service provider name, i dont like this
+     SimSlot1.println("AT+COPS?");    // i prefer operator name 
     //  SimSlot1.println("AT+CNMI?");
    }
    if(sim2_active == 1){
         // SimSlot2.println("AT+CSPN?");
-      // SimSlot2.println("ATD+2348161111269;"); //this   2347082738974
-      // vTaskDelay(500);
         SimSlot2.println("AT+COPS?"); 
         // SimSlot2.println("AT+CNMI?");
    }
@@ -681,7 +547,7 @@ void blinkerLED( void * pvParameters )
       digitalWrite(34, !ledState);
   }
   }
-  /*
+  /* TODO:::
   every24hr, i need to check for previous 30days record and delete
   1hr in a day is (1000ms times 60sec time 60mins) = 3600000ms
   try to delete every 3600000ms/300ms
@@ -795,38 +661,3 @@ esp_err_t esp_core_dump_image_erase()
 
     return err;
 }
-
-
-
-
-/*
-
-{"message":"CFpyuOjhCm2q39Bvy8nE9GCwSc0gSUzKlcU15t6AqBucGE/p3kSPsNQ0QMOBchTHRmpNhS6UrVKTTTku09apZ/zxC75hIc9jz2nJyBHXwacoGHPlqgAjQloL4I1MJNWr97jWGkDel/Kes28dcFa0A4dLUphG0aq1Xfp+UIKz5efXp+9E0y7RXl1acAdBrnNO"}
-
-
-Francis Ocholi1:41 PM
-($epoch_time . "." . hash_hmac("sha512", $epoch_time . $message, $secret_token);)
-
-sample fingerprint (1574268077.b8e7ae12510bdfb1812e463a7f086122cf37e4f7)
-
-{
- abc => "some text",
- abc => "some text",
- abc => "some text",
- fingerprint => "1574268077.b8e7ae12510bdfb1812e463a7f086122cf37e4f7" 
-}
-
-
-Abdulbasit Anate1:44 PM
-base 64 encode the SMS/data
-{   
-     "message": "dkflkejfepwofiewpifeuf8h923f3fh3829fh328f239f8"
-}
-Abdulbasit Anate1:46 PM
-hash_var = $epoch_time . "." . hash_hmac("sha512", $epoch_time . "dkflkejfepwofiewpifeuf8h923f3fh3829fh328f239f8", $secret_token);
-
-{
-    "message": "dkflkejfepwofiewpifeuf8h923f3fh3829fh328f239f8",
-    "fingerprint": hash_var
-}
-*/

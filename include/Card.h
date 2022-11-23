@@ -180,6 +180,7 @@ OK
 void SDlogger(String Data){
   #if(DEBUG == 1)
   Serial.println("appending /redundantSMSs.txt data");
+  Serial.println(Data);
   #endif
   // if(Data.indexOf("REC UNREAD")<0){
   //   return;

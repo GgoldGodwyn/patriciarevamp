@@ -534,7 +534,7 @@ boolean mqttConnect() {
   DEBUG_PRINT("Connecting to ");
   DEBUG_PRINT(broker_url);
 
-  if (!ptr_mqtt->connect(device_name, mqtt_username, mqtt_password)) {
+  if (!ptr_mqtt->connect(device_name.c_str(), mqtt_username.c_str(), mqtt_password.c_str())) {
     DEBUG_PRINTLN(" fail");
     //ESP.restart();
     return false;
@@ -568,7 +568,7 @@ void loopMqtt() {
 
 void initMqtt()
 {
-  ptr_mqtt->setServer(broker_url, broker_port);
+  ptr_mqtt->setServer(broker_url.c_str(), broker_port);
   ptr_mqtt->setCallback(mqttCallback);
   
   #if (DEBUG == 1)

@@ -2,6 +2,34 @@
 #define __MACROS_H
 
 
+/* 
+  if its the first time burning code into the hardware
+  -> change device_name (specify device name on the network)
+  -> clear deploy ( this enable configuration code)
+  -> set WritePef (write default preferences to the device)
+  -> set wipeNVS (wipe non-volatite storage to free space)
+
+  ->> note!!! remember to 
+    -> clear WritePef and wipeNVS on subsequent burning
+    -> and set deploy
+*/
+String device_name  = "device_1";
+#define deploy 1    // default deploy with 1
+#define WritePef 0  //default deploy with 0
+#define wipeNVS 0   //default deploy with 0
+
+
+#define hasMMC 1 // very important
+
+
+// extras for OTA update
+String serverName;
+float ESP32firmware_version = 1.0;  // Set your firmware version here. Your other sketch should have a different version number.
+// String serverName = "http://192.168.43.31:8000";
+String otalink = "";
+int reloadFlag = 0;
+
+
 //debug
 #define DEBUG             0
 #define COMMENT           1
@@ -11,16 +39,7 @@
 #define myHTTPS 1
 #define serverType myHTTP
 
-#define hasMMC 1 // very important
 
-
-
-    // extras for OTA update
-    float ESP32firmware_version = 1.0;  // Set your firmware version here. Your other sketch should have a different version number.
-    // String serverName = "http://192.168.43.31:8000";
-    String serverName = "http://atoc.gloverapp.co";
-    String otalink = "";
-    int reloadFlag = 0;
 
 
 // Default Definitions and LED's
@@ -112,7 +131,7 @@ int slot3Taskflag = 0;
 
 
 
-
+// do not change this else you want a differeent mapping
 #define SimSlot1  Serial // NEAR THE POWER MODULE
 #define SimSlot2  Serial2
 #define SimSlot3  Serial1
@@ -123,9 +142,11 @@ int slot3Taskflag = 0;
 #include "ArduinoJson.h"
 #include "connection.h"
 #include "lcdHelper.h"
+
 #if (hasMMC == 1)
-#include "Card.h"
+  #include "Card.h"
 #endif
+
 #include <WiFiClientSecure.h>
 #include "WebSocketsClient.h"
 #include "SocketIOclient.h"
@@ -134,8 +155,6 @@ int slot3Taskflag = 0;
 #include "updater.h"
 
 
-Cipher * cipher = new Cipher();
-char * key = "abcdefghijklmnop";
 
 
 #if(channel != MqttChannel)
@@ -145,7 +164,6 @@ char * key = "abcdefghijklmnop";
     #define DEBUG_PRINTLN(...) if (DEBUG) { Serial.println(__VA_ARGS__); }
     #define DEBUG_PRINTF(...) if (DEBUG) { Serial.printf(__VA_ARGS__); }
     //Subscribe Topics
-    #define device_name "device_1"
 
     #define sub_read_sms "device_1/read_sms"
     #define sub_read_sms_pend "device_1/read_sms_pend"
@@ -172,55 +190,3 @@ char * key = "abcdefghijklmnop";
 
 
 #endif
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  /*
-  //todo : check onsolicited messaeges and process them
-  //step 1 : check if datasubs an unsolicited message
-  if(data.indexOf(UNSOL_MSG) > 0){
-      data = data.substring(data.indexOf(UNSOL_MSG));
-      //step 2: if yes, read the index 
-      char rd[10];
-      memset (rd,'\0',sizeof rd);
-      sprintf(rd,"%s%c","AT+CMGR=",'t'); // change t to index
-      SimSlot1.println(rd);
-      //step 3: read teh sms on that index
-      delay(1000);
-      datasub = "aaaa ";
-      if ( SimSlot1.available() >= 1){
-        while(SimSlot1.available()){
-          char c = SimSlot1.read();
-          datasub+=c;
-          delayMicroseconds(1050); 
-          }
-        }
-      //step 4: delete the sms
-      memset (rd,'\0',sizeof rd);
-      sprintf(rd,"%s%c","AT+CMGD=",'t'); // change t to index
-      SimSlot1.println(rd);
-      //step 5: save the message in MMC
-      
-
-      //step x: push the message to the cloud
-      // replySocket(datasub);
-      USE_SERIAL.println(datasub);
-    }*/
